@@ -86,6 +86,7 @@ model Purchase {
   quantity    Float
   unitPrice   Float
   totalPrice  Float
+  weightGrams Float    @default(0)
   date        DateTime @default(now())
   notes       String?
   createdAt   DateTime @default(now())

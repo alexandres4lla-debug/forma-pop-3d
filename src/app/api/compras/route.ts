@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { description, material, quantity, unitPrice, date, notes } = body;
+    const { description, material, quantity, unitPrice, weightGrams, date, notes } = body;
 
     if (!description || !material) {
       return NextResponse.json(
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         quantity: quantity || 0,
         unitPrice: unitPrice || 0,
         totalPrice,
+        weightGrams: weightGrams || 0,
         date: date ? new Date(date) : new Date(),
         notes,
       },

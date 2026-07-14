@@ -112,12 +112,23 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState(30);
+  const [customStart, setCustomStart] = useState<string>("");
+  const [customEnd, setCustomEnd] = useState<string>("");
 
-  const fetchDashboard = useCallback((days: number) => {
+  const fetchDashboard = useCallback((days: number, startDateStr?: string, endDateStr?: string) => {
     setLoading(true);
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    let startDate: Date;
+    let endDate: Date;
+
+    if (startDateStr && endDateStr) {
+      startDate = new Date(startDateStr);
+      endDate = new Date(endDateStr);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      endDate = new Date();
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+    }
 
     const params = new URLSearchParams({
       startDate: startDate.toISOString(),
@@ -142,12 +153,12 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchDashboard(selectedPeriod);
-  }, [selectedPeriod, fetchDashboard]);
-
-  const handlePeriodChange = (days: number) => {
-    setSelectedPeriod(days);
-  };
+    if (customStart && customEnd) {
+      fetchDashboard(30, customStart, customEnd);
+    } else {
+      fetchDashboard(selectedPeriod);
+    }
+  }, [selectedPeriod, customStart, customEnd, fetchDashboard]);
 
   if (loading) {
     return (
@@ -161,8 +172,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-2">
-          {PERIODS.map((p) => (
-            <SkeletonPulse key={p.days} className="h-9 w-36" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <SkeletonPulse key={i} className="h-9 w-32" />
           ))}
         </div>
 
@@ -373,7 +384,7 @@ export default function DashboardPage() {
       {/* Date Range Filter Bar */}
       <Card>
         <CardContent className="py-3 px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-muted-foreground mr-1">
               Período:
             </span>
@@ -381,12 +392,16 @@ export default function DashboardPage() {
               <Button
                 key={period.days}
                 variant={
-                  selectedPeriod === period.days ? "default" : "outline"
+                  !customStart && !customEnd && selectedPeriod === period.days ? "default" : "outline"
                 }
                 size="sm"
-                onClick={() => handlePeriodChange(period.days)}
+                onClick={() => {
+                  setSelectedPeriod(period.days);
+                  setCustomStart("");
+                  setCustomEnd("");
+                }}
                 className={
-                  selectedPeriod === period.days
+                  !customStart && !customEnd && selectedPeriod === period.days
                     ? "bg-primary text-primary-foreground"
                     : ""
                 }
@@ -394,6 +409,27 @@ export default function DashboardPage() {
                 {period.label}
               </Button>
             ))}
+            <div className="flex items-center gap-2 ml-2 border-l pl-3">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => {
+                  setCustomStart(e.target.value);
+                  setSelectedPeriod(0);
+                }}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+              <span className="text-sm text-muted-foreground">até</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => {
+                  setCustomEnd(e.target.value);
+                  setSelectedPeriod(0);
+                }}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

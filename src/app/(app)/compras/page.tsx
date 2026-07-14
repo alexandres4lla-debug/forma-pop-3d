@@ -31,6 +31,7 @@ interface Purchase {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  weightGrams?: number;
   date: string;
   notes: string;
   createdAt: string;
@@ -53,6 +54,7 @@ interface FormData {
   material: string;
   quantity: number;
   unitPrice: number;
+  weightGrams: number;
   date: string;
   notes: string;
 }
@@ -62,6 +64,7 @@ const emptyForm: FormData = {
   material: "",
   quantity: 1,
   unitPrice: 0,
+  weightGrams: 0,
   date: new Date().toISOString().split("T")[0],
   notes: "",
 };
@@ -136,6 +139,7 @@ export default function ComprasPage() {
       material: purchase.material,
       quantity: purchase.quantity,
       unitPrice: purchase.unitPrice,
+      weightGrams: (purchase as any).weightGrams || 0,
       date: purchase.date.split("T")[0],
       notes: purchase.notes,
     });
@@ -150,6 +154,7 @@ export default function ComprasPage() {
         material: form.material,
         quantity: form.quantity,
         unitPrice: form.unitPrice,
+        weightGrams: form.weightGrams,
         date: form.date,
         notes: form.notes,
       };
@@ -270,8 +275,10 @@ export default function ComprasPage() {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Material</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Preço Unitário</TableHead>
+                <TableHead>Qtd</TableHead>
+                <TableHead>Preço Unit.</TableHead>
+                <TableHead>Peso</TableHead>
+                <TableHead>R$/kg</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -280,13 +287,13 @@ export default function ComprasPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : purchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Nenhuma compra encontrada
                   </TableCell>
                 </TableRow>
@@ -299,6 +306,14 @@ export default function ComprasPage() {
                     </TableCell>
                     <TableCell>{purchase.quantity}</TableCell>
                     <TableCell>{formatCurrency(purchase.unitPrice)}</TableCell>
+                    <TableCell>
+                      {purchase.weightGrams ? `${purchase.weightGrams}g` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {purchase.weightGrams
+                        ? formatCurrency((purchase.totalPrice / purchase.weightGrams) * 1000)
+                        : "-"}
+                    </TableCell>
                     <TableCell className="font-semibold">
                       {formatCurrency(purchase.totalPrice)}
                     </TableCell>
@@ -405,10 +420,36 @@ export default function ComprasPage() {
               </div>
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="weightGrams">Peso (gramas)</Label>
+              <Input
+                id="weightGrams"
+                type="number"
+                step={1}
+                min={0}
+                value={form.weightGrams}
+                onChange={(e) => updateField("weightGrams", Number(e.target.value))}
+                placeholder="Ex: 1000"
+              />
+            </div>
+            <div className="grid gap-2">
               <Label>Total</Label>
               <div className="text-lg font-bold">
                 {formatCurrency(form.quantity * form.unitPrice)}
               </div>
+              {form.weightGrams > 0 && (
+                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                  <span>
+                    R$/g: <span className="font-medium text-foreground">
+                      {formatCurrency((form.quantity * form.unitPrice) / form.weightGrams)}
+                    </span>
+                  </span>
+                  <span>
+                    R$/kg: <span className="font-medium text-foreground">
+                      {formatCurrency(((form.quantity * form.unitPrice) / form.weightGrams) * 1000)}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="date">Data</Label>
