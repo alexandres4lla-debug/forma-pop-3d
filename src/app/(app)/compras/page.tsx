@@ -193,7 +193,11 @@ export default function ComprasPage() {
     }
   };
 
-  const parseNumber = (v: string) => Number(v.replace(",", "."));
+  const parseNumber = (v: string) => {
+    const cleaned = v.replace(/,/g, ".");
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  };
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -405,10 +409,10 @@ export default function ComprasPage() {
                 <Label htmlFor="weightGrams">Peso (gramas) *</Label>
                 <Input
                   id="weightGrams"
-                  type="number"
-                  step={1}
+                  type="text"
+                  inputMode="numeric"
                   min={0}
-                  value={form.weightGrams}
+                  value={form.weightGrams || ""}
                   onChange={(e) => updateField("weightGrams", parseNumber(e.target.value))}
                   placeholder="Ex: 1000"
                 />
@@ -417,12 +421,12 @@ export default function ComprasPage() {
                 <Label htmlFor="totalPriceInput">Valor Total R$ *</Label>
                 <Input
                   id="totalPriceInput"
-                  type="number"
-                  step={0.01}
+                  type="text"
+                  inputMode="decimal"
                   min={0}
-                  value={form.unitPrice}
+                  value={form.unitPrice || ""}
                   onChange={(e) => updateField("unitPrice", parseNumber(e.target.value))}
-                  placeholder="Ex: 66.48"
+                  placeholder="Ex: 68,48"
                 />
               </div>
             </div>
