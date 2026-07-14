@@ -34,7 +34,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { description, material, quantity, unitPrice, weightGrams, date, notes } = body;
+    const { description, material, quantity, unitPrice, weightGrams, color, date, notes } = body;
 
     const existingPurchase = await prisma.purchase.findUnique({ where: { id } });
     if (!existingPurchase) {
@@ -56,6 +56,7 @@ export async function PUT(
         unitPrice,
         totalPrice,
         weightGrams: weightGrams || 0,
+        color: color || null,
         date: date ? new Date(date) : undefined,
         notes,
       },

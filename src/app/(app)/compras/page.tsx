@@ -32,6 +32,7 @@ interface Purchase {
   unitPrice: number;
   totalPrice: number;
   weightGrams?: number;
+  color?: string;
   date: string;
   notes: string;
   createdAt: string;
@@ -55,9 +56,28 @@ interface FormData {
   quantity: number;
   unitPrice: number;
   weightGrams: number;
+  color: string;
   date: string;
   notes: string;
 }
+
+const FILAMENT_COLORS = [
+  { label: "Preto", value: "preto", hex: "#1a1a1a" },
+  { label: "Branco", value: "branco", hex: "#f5f5f5" },
+  { label: "Vermelho", value: "vermelho", hex: "#dc2626" },
+  { label: "Azul", value: "azul", hex: "#2563eb" },
+  { label: "Verde", value: "verde", hex: "#16a34a" },
+  { label: "Amarelo", value: "amarelo", hex: "#eab308" },
+  { label: "Laranja", value: "laranja", hex: "#ea580c" },
+  { label: "Rosa", value: "rosa", hex: "#ec4899" },
+  { label: "Roxo", value: "roxo", hex: "#9333ea" },
+  { label: "Cinza", value: "cinza", hex: "#737373" },
+  { label: "Bege", value: "bege", hex: "#d4a574" },
+  { label: "Prata", value: "prata", hex: "#a8a29e" },
+  { label: "Dourado", value: "dourado", hex: "#ca8a04" },
+  { label: "Transparente", value: "transparente", hex: "#e5e7eb" },
+  { label: "Fluorescente", value: "fluorescente", hex: "#a3e635" },
+];
 
 const emptyForm: FormData = {
   description: "",
@@ -65,9 +85,14 @@ const emptyForm: FormData = {
   quantity: 1,
   unitPrice: 0,
   weightGrams: 0,
+  color: "",
   date: new Date().toISOString().split("T")[0],
   notes: "",
 };
+
+function getColorHex(colorValue: string): string {
+  return FILAMENT_COLORS.find((c) => c.value === colorValue)?.hex || "#a3a3a3";
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -140,6 +165,7 @@ export default function ComprasPage() {
       quantity: purchase.quantity,
       unitPrice: purchase.unitPrice,
       weightGrams: (purchase as any).weightGrams || 0,
+      color: (purchase as any).color || "",
       date: purchase.date.split("T")[0],
       notes: purchase.notes,
     });
@@ -155,6 +181,7 @@ export default function ComprasPage() {
         quantity: 1,
         unitPrice: form.unitPrice,
         weightGrams: form.weightGrams,
+        color: form.color || null,
         totalPrice: form.unitPrice,
         date: form.date,
         notes: form.notes,
@@ -279,6 +306,7 @@ export default function ComprasPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Cor</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Material</TableHead>
                 <TableHead>Peso</TableHead>
@@ -292,19 +320,32 @@ export default function ComprasPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : purchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     Nenhuma compra encontrada
                   </TableCell>
                 </TableRow>
               ) : (
                 purchases.map((purchase) => (
                   <TableRow key={purchase.id}>
+                    <TableCell>
+                      {(purchase as any).color ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-4 w-4 rounded-full border shrink-0"
+                            style={{ backgroundColor: getColorHex((purchase as any).color) }}
+                          />
+                          <span className="text-xs capitalize">{(purchase as any).color}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{purchase.description}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{purchase.material}</Badge>
@@ -428,6 +469,30 @@ export default function ComprasPage() {
                   onChange={(e) => updateField("unitPrice", parseNumber(e.target.value))}
                   placeholder="Ex: 68,48"
                 />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="color">Cor</Label>
+              <div className="flex items-center gap-2">
+                {form.color && (
+                  <div
+                    className="h-6 w-6 rounded-full border shrink-0"
+                    style={{ backgroundColor: getColorHex(form.color) }}
+                  />
+                )}
+                <select
+                  id="color"
+                  value={form.color}
+                  onChange={(e) => updateField("color", e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Selecionar cor...</option>
+                  {FILAMENT_COLORS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             {form.weightGrams > 0 && form.unitPrice > 0 && (
