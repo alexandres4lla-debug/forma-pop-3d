@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
       salePrice, stock, weightPerPiece, printTimeMinutes,
     } = body;
 
-    if (!name || !sku) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Nome e SKU são obrigatórios" },
+        { error: "Nome é obrigatório" },
         { status: 400 }
       );
     }

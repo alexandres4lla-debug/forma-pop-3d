@@ -160,6 +160,7 @@ export default function ProdutosPage() {
   const [submitting, setSubmitting] = React.useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [materials, setMaterials] = React.useState<Array<{ type: string; color?: string | null; costPerGram: number; name: string }>>([]);
 
   const fetchProducts = React.useCallback(async () => {
     setLoading(true);
@@ -187,6 +188,27 @@ export default function ProdutosPage() {
   React.useEffect(() => {
     setPage(1);
   }, [search]);
+
+  React.useEffect(() => {
+    if (dialogOpen) {
+      fetch("/api/material-inventory")
+        .then((r) => r.json())
+        .then((d) => setMaterials(d.materials || []))
+        .catch(() => {});
+    }
+  }, [dialogOpen]);
+
+  React.useEffect(() => {
+    if (formData.materialType && formData.materialWeightUsed > 0 && materials.length > 0) {
+      const match = materials.find(
+        (m) => m.type === formData.materialType && (!formData.materialColor || !m.color || m.color === formData.materialColor)
+      );
+      if (match) {
+        const cost = formData.materialWeightUsed * match.costPerGram;
+        setFormData((prev) => ({ ...prev, materialCost: Math.round(cost * 100) / 100 }));
+      }
+    }
+  }, [formData.materialType, formData.materialColor, formData.materialWeightUsed, materials]);
 
   const computedTotal = formData.materialCost + formData.laborCost + formData.energyCost + formData.otherCost;
   const margin = getMargin(formData.salePrice, computedTotal);
@@ -797,13 +819,36 @@ export default function ProdutosPage() {
                 <Label htmlFor="materialWeightUsed">Peso utilizado por peça (g)</Label>
                 <Input
                   id="materialWeightUsed"
-                  type="number"
-                  step="0.1"
+                  type="text"
+                  inputMode="decimal"
                   min="0"
-                  value={formData.materialWeightUsed}
-                  onChange={(e) => updateField("materialWeightUsed", parseFloat(e.target.value) || 0)}
+                  value={formData.materialWeightUsed || ""}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value.replace(",", ".")) || 0;
+                    updateField("materialWeightUsed", v);
+                  }}
+                  placeholder="Ex: 105"
                 />
               </div>
+              {formData.materialType && formData.materialWeightUsed > 0 && (
+                <div className="rounded-lg border bg-teal-50 dark:bg-teal-950/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Custo do material ({formData.materialType})
+                    </span>
+                    <span className="text-sm font-bold text-teal-600 dark:text-teal-400">
+                      {formatCurrency(formData.materialCost)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.materialWeightUsed}g × {
+                      materials.find((m) => m.type === formData.materialType)?.costPerGram
+                        ? formatCurrency(materials.find((m) => m.type === formData.materialType)!.costPerGram) + "/g"
+                        : "sem estoque"
+                    }
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Produção */}
@@ -846,44 +891,46 @@ export default function ProdutosPage() {
                   <Label htmlFor="materialCost">Material (R$)</Label>
                   <Input
                     id="materialCost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.materialCost}
-                    onChange={(e) => updateField("materialCost", parseFloat(e.target.value) || 0)}
+                    type="text"
+                    readOnly
+                    value={formData.materialCost > 0 ? formatCurrency(formData.materialCost) : "0,00"}
+                    className="bg-muted/50"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="laborCost">Mão de obra (R$)</Label>
                   <Input
                     id="laborCost"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     min="0"
-                    value={formData.laborCost}
-                    onChange={(e) => updateField("laborCost", parseFloat(e.target.value) || 0)}
+                    value={formData.laborCost || ""}
+                    onChange={(e) => updateField("laborCost", parseFloat(e.target.value.replace(",", ".")) || 0)}
+                    placeholder="0,00"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="energyCost">Energia (R$)</Label>
                   <Input
                     id="energyCost"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     min="0"
-                    value={formData.energyCost}
-                    onChange={(e) => updateField("energyCost", parseFloat(e.target.value) || 0)}
+                    value={formData.energyCost || ""}
+                    onChange={(e) => updateField("energyCost", parseFloat(e.target.value.replace(",", ".")) || 0)}
+                    placeholder="0,00"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="otherCost">Outros (R$)</Label>
                   <Input
                     id="otherCost"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     min="0"
-                    value={formData.otherCost}
-                    onChange={(e) => updateField("otherCost", parseFloat(e.target.value) || 0)}
+                    value={formData.otherCost || ""}
+                    onChange={(e) => updateField("otherCost", parseFloat(e.target.value.replace(",", ".")) || 0)}
+                    placeholder="0,00"
                   />
                 </div>
               </div>
@@ -903,21 +950,24 @@ export default function ProdutosPage() {
                   <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
                   <Input
                     id="salePrice"
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     min="0"
-                    value={formData.salePrice}
-                    onChange={(e) => updateField("salePrice", parseFloat(e.target.value) || 0)}
+                    value={formData.salePrice || ""}
+                    onChange={(e) => updateField("salePrice", parseFloat(e.target.value.replace(",", ".")) || 0)}
+                    placeholder="0,00"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stock">Estoque</Label>
                   <Input
                     id="stock"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     min="0"
-                    value={formData.stock}
-                    onChange={(e) => updateField("stock", parseInt(e.target.value) || 0)}
+                    value={formData.stock || ""}
+                    onChange={(e) => updateField("stock", parseInt(e.target.value.replace(",", ".")) || 0)}
+                    placeholder="0"
                   />
                 </div>
               </div>
