@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { signToken, setSessionCookie } from "@/lib/auth";
+import { signToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +43,16 @@ export async function POST(request: NextRequest) {
       user: { id: user.id, email: user.email, name: user.name },
     });
 
-    response.headers.set("Set-Cookie", setSessionCookie(token));
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+    });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "Erro ao criar conta" },
       { status: 500 }
