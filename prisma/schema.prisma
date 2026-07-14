@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  name             String
+  sku              String?  @unique
+  description      String?
+  photo            String?
+  photos           String?
+  materialType     String?
+  materialBrand    String?
+  materialColor    String?
+  materialWeightUsed Float  @default(0)
+  materialCost     Float    @default(0)
+  laborCost        Float    @default(0)
+  energyCost       Float    @default(0)
+  otherCost        Float    @default(0)
+  totalCost        Float    @default(0)
+  salePrice        Float    @default(0)
+  stock            Int      @default(0)
+  weightPerPiece   Float    @default(0)
+  printTimeMinutes Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  productionRuns ProductionRun[]
+  sales          Sale[]
+
+  @@map("products")
+}
+
+model MaterialInventory {
+  id             String   @id @default(cuid())
+  name           String
+  type           String
+  brand          String?
+  color          String?
+  totalWeight    Float
+  remainingWeight Float
+  purchasePrice  Float
+  costPerGram    Float
+  purchaseDate   DateTime @default(now())
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@map("material_inventory")
+}
+
+model ProductionRun {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity     Int
+  materialUsed Float
+  printTime    Int
+  status       String   @default("concluido")
+  notes        String?
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@map("production_runs")
+}
+
+model Purchase {
+  id          String   @id @default(cuid())
+  description String
+  material    String
+  quantity    Float
+  unitPrice   Float
+  totalPrice  Float
+  date        DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@map("purchases")
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  customerName  String?
+  marketplace   String?
+  quantity      Int
+  unitPrice     Float
+  totalPrice    Float
+  paymentMethod String?
+  date          DateTime @default(now())
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@map("sales")
+}
+
+model Settings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
+}
