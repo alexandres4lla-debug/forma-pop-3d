@@ -152,9 +152,10 @@ export default function ComprasPage() {
       const body = {
         description: form.description,
         material: form.material,
-        quantity: form.quantity,
+        quantity: 1,
         unitPrice: form.unitPrice,
         weightGrams: form.weightGrams,
+        totalPrice: form.unitPrice,
         date: form.date,
         notes: form.notes,
       };
@@ -275,11 +276,10 @@ export default function ComprasPage() {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Material</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Preço Unit.</TableHead>
                 <TableHead>Peso</TableHead>
+                <TableHead>Valor Total</TableHead>
+                <TableHead>R$/g</TableHead>
                 <TableHead>R$/kg</TableHead>
-                <TableHead>Total</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -287,13 +287,13 @@ export default function ComprasPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : purchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Nenhuma compra encontrada
                   </TableCell>
                 </TableRow>
@@ -304,18 +304,21 @@ export default function ComprasPage() {
                     <TableCell>
                       <Badge variant="secondary">{purchase.material}</Badge>
                     </TableCell>
-                    <TableCell>{purchase.quantity}</TableCell>
-                    <TableCell>{formatCurrency(purchase.unitPrice)}</TableCell>
                     <TableCell>
                       {purchase.weightGrams ? `${purchase.weightGrams}g` : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="font-semibold">
+                      {formatCurrency(purchase.totalPrice)}
+                    </TableCell>
+                    <TableCell className="text-teal-600 dark:text-teal-400 font-medium">
+                      {purchase.weightGrams
+                        ? formatCurrency(purchase.totalPrice / purchase.weightGrams)
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-teal-600 dark:text-teal-400 font-medium">
                       {purchase.weightGrams
                         ? formatCurrency((purchase.totalPrice / purchase.weightGrams) * 1000)
                         : "-"}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {formatCurrency(purchase.totalPrice)}
                     </TableCell>
                     <TableCell>{formatDate(purchase.date)}</TableCell>
                     <TableCell className="text-right">
@@ -398,59 +401,46 @@ export default function ComprasPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantidade</Label>
+                <Label htmlFor="weightGrams">Peso (gramas) *</Label>
                 <Input
-                  id="quantity"
+                  id="weightGrams"
                   type="number"
-                  min={1}
-                  value={form.quantity}
-                  onChange={(e) => updateField("quantity", Number(e.target.value))}
+                  step={1}
+                  min={0}
+                  value={form.weightGrams}
+                  onChange={(e) => updateField("weightGrams", Number(e.target.value))}
+                  placeholder="Ex: 1000"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="unitPrice">Preço Unitário R$</Label>
+                <Label htmlFor="totalPriceInput">Valor Total R$ *</Label>
                 <Input
-                  id="unitPrice"
+                  id="totalPriceInput"
                   type="number"
                   step={0.01}
                   min={0}
                   value={form.unitPrice}
                   onChange={(e) => updateField("unitPrice", Number(e.target.value))}
+                  placeholder="Ex: 66.48"
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="weightGrams">Peso (gramas)</Label>
-              <Input
-                id="weightGrams"
-                type="number"
-                step={1}
-                min={0}
-                value={form.weightGrams}
-                onChange={(e) => updateField("weightGrams", Number(e.target.value))}
-                placeholder="Ex: 1000"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Total</Label>
-              <div className="text-lg font-bold">
-                {formatCurrency(form.quantity * form.unitPrice)}
-              </div>
-              {form.weightGrams > 0 && (
-                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                  <span>
-                    R$/g: <span className="font-medium text-foreground">
-                      {formatCurrency((form.quantity * form.unitPrice) / form.weightGrams)}
-                    </span>
-                  </span>
-                  <span>
-                    R$/kg: <span className="font-medium text-foreground">
-                      {formatCurrency(((form.quantity * form.unitPrice) / form.weightGrams) * 1000)}
-                    </span>
+            {form.weightGrams > 0 && form.unitPrice > 0 && (
+              <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Custo por grama</span>
+                  <span className="text-lg font-bold text-teal-600 dark:text-teal-400">
+                    {formatCurrency(form.unitPrice / form.weightGrams)}
                   </span>
                 </div>
-              )}
-            </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Custo por kg</span>
+                  <span className="text-lg font-bold text-teal-600 dark:text-teal-400">
+                    {formatCurrency((form.unitPrice / form.weightGrams) * 1000)}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="date">Data</Label>
               <Input
