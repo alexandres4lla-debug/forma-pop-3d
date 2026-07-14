@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import { SettingsProvider } from "@/components/settings-context";
-import Sidebar from "@/components/layout/sidebar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -33,12 +32,7 @@ export default function RootLayout({
         >
           <SettingsProvider>
             <TooltipProvider>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <main className="flex-1 lg:pl-64">
-                  <div className="p-6 lg:p-8">{children}</div>
-                </main>
-              </div>
+              {children}
             </TooltipProvider>
             <Toaster richColors position="top-right" />
           </SettingsProvider>
