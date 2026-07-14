@@ -193,6 +193,7 @@ export default function ComprasPage() {
     }
   };
 
+  const parseNumber = (v: string) => Number(v.replace(",", "."));
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -408,7 +409,7 @@ export default function ComprasPage() {
                   step={1}
                   min={0}
                   value={form.weightGrams}
-                  onChange={(e) => updateField("weightGrams", Number(e.target.value))}
+                  onChange={(e) => updateField("weightGrams", parseNumber(e.target.value))}
                   placeholder="Ex: 1000"
                 />
               </div>
@@ -420,7 +421,7 @@ export default function ComprasPage() {
                   step={0.01}
                   min={0}
                   value={form.unitPrice}
-                  onChange={(e) => updateField("unitPrice", Number(e.target.value))}
+                  onChange={(e) => updateField("unitPrice", parseNumber(e.target.value))}
                   placeholder="Ex: 66.48"
                 />
               </div>
